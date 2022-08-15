@@ -1,0 +1,37 @@
+{
+  "couchbase": {
+    "address": "couchbase://127.0.0.1",
+    "port": "",
+    "username": "Admin",
+    "password": "123456"
+  },
+  "server": {
+    "port": ":8090"
+  },
+  "consumers": [
+    {
+      "id": 1,
+      "broker": "0.0.0.0:9092",
+      "topicName": "my-test-topic-1",
+      "groupId": "g1",
+      "maxBytes": 100,
+      "targetTopic": {
+        "network": "tcp",
+        "address": "localhost:9092",
+        "topicName": "main-topic-1"
+      }
+    },
+    {
+      "id": 2,
+      "broker": "localhost:9092",
+      "topicName": "my-test-topic-2",
+      "groupId": "g2",
+      "maxBytes": 100,
+      "targetTopic": {
+        "network": "tcp",
+        "address": "localhost:9092",
+        "topicName": "main-topic-2"
+      }
+    }
+  ]
+}
