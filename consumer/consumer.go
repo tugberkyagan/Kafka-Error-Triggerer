@@ -9,13 +9,13 @@ import (
 	"kafka-error-triggerer/utils"
 )
 
-func StartKafkaConsumer(messageRepo repositories.MessageRepositoryInterface, consumerConfig utils.ConsumerConfig) {
+func StartKafkaConsumer(messageRepo repositories.MessageRepositoryInterface, config utils.Configuration, consumerConfig utils.Consumer) {
 
 	conf := kafka.ReaderConfig{
-		Brokers:  []string{consumerConfig.Broker},
+		Brokers:  []string{config.Kafka.Brokers},
 		Topic:    consumerConfig.TopicName,
-		GroupID:  consumerConfig.GroupID,
-		MaxBytes: consumerConfig.MaxBytes,
+		GroupID:  "group1",
+		MaxBytes: 100,
 	}
 
 	reader := kafka.NewReader(conf)
@@ -29,23 +29,16 @@ func StartKafkaConsumer(messageRepo repositories.MessageRepositoryInterface, con
 		}
 
 		consumedMessage := models.MessageModel{}
-
 		consumedMessage.Topic = m.Topic
+		consumedMessage.TargetTopic = consumerConfig.TargetTopicName
 		consumedMessage.Offset = m.Offset
 		consumedMessage.Partition = m.Partition
-
-		//decodedMessageValue, _ := base64.StdEncoding.DecodeString(string(m.Value))
-
 		consumedMessage.Value = string(m.Value)
-
-		//decodedMessageKey, _ := base64.StdEncoding.DecodeString(string(m.Key))
-
 		consumedMessage.Key = string(m.Key)
 
 		myHeaders := make([]models.MyHeader, 0)
 
 		isReproducedBefore := false
-		hasConsumerID := false
 
 		for _, element := range m.Headers {
 
@@ -60,10 +53,6 @@ func StartKafkaConsumer(messageRepo repositories.MessageRepositoryInterface, con
 				isReproducedBefore = true
 			}
 
-			if newHeader.Key == "ConsumerID" {
-				hasConsumerID = true
-			}
-
 			myHeaders = append(myHeaders, newHeader)
 		}
 
@@ -71,15 +60,6 @@ func StartKafkaConsumer(messageRepo repositories.MessageRepositoryInterface, con
 			newHeader := models.MyHeader{
 				Key:   "ReproduceCount",
 				Value: 0,
-			}
-
-			myHeaders = append(myHeaders, newHeader)
-		}
-
-		if !hasConsumerID {
-			newHeader := models.MyHeader{
-				Key:   "ConsumerID",
-				Value: consumerConfig.ID,
 			}
 
 			myHeaders = append(myHeaders, newHeader)

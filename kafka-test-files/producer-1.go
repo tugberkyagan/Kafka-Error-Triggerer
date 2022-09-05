@@ -5,16 +5,18 @@ import (
 	"encoding/json"
 	"github.com/segmentio/kafka-go"
 	"kafka-error-triggerer/pkg/models"
+	"kafka-error-triggerer/utils"
 	"log"
 	"time"
 )
 
 func main() {
-	topic := "my-test-topic-1"
+	topic := "earth.international-test"
+
+	config := utils.NewConfiguration()
 
 	w := &kafka.Writer{
-		Addr: kafka.TCP("localhost:9092"),
-		// NOTE: When Topic is not defined here, each Message must define it instead.
+		Addr:     kafka.TCP(config.Kafka.Brokers),
 		Balancer: &kafka.LeastBytes{},
 	}
 
@@ -26,7 +28,7 @@ func main() {
 	marshalledKafkaMessage1ValueSample, err := json.Marshal(kafkaMessage1ValueSample)
 
 	if err != nil {
-		println("Marshall error on masrshalledKafkaMessage1ValueSample in producer-1: ", err)
+		println("Marshall error on marshalledKafkaMessage1ValueSample in producer-1: ", err)
 	}
 
 	message1Key := []byte("zzzzzzzz")
@@ -54,14 +56,14 @@ func main() {
 		Topic:         topic,
 		Partition:     0,
 		Offset:        11,
-		HighWaterMark: 0,
+		HighWaterMark: 1,
 		Key:           message1Key,
 		Value:         marshalledKafkaMessage1ValueSample,
 		Headers:       headerList,
 		Time:          time.Now(),
 	}
 
-	// Message 2 -------------
+	//------------------
 	kafkaMessage2ValueSample := models.KafkaMessageValueModel{
 		Xyz: 14,
 		Abc: "abc",
@@ -98,7 +100,7 @@ func main() {
 		Topic:         topic,
 		Partition:     0,
 		Offset:        1111,
-		HighWaterMark: 0,
+		HighWaterMark: 1,
 		Key:           message2Key,
 		Value:         marshalledKafkaMessage2ValueSample,
 		Headers:       headerList2,
@@ -108,14 +110,12 @@ func main() {
 	err = w.WriteMessages(context.Background(),
 		// NOTE: Each Message has Topic defined, otherwise an error is returned.
 		kafka.Message{
-			Topic:         topic,
-			Partition:     message1.Partition,
-			Offset:        message1.Offset,
-			HighWaterMark: message1.HighWaterMark,
-			Key:           message1.Key,
-			Value:         message1.Value,
-			Headers:       message1.Headers,
-			Time:          message1.Time,
+			Topic:     topic,
+			Partition: message1.Partition,
+			Key:       message1.Key,
+			Value:     message1.Value,
+			Headers:   message1.Headers,
+			Time:      message1.Time,
 		},
 	)
 
@@ -126,13 +126,12 @@ func main() {
 	err = w.WriteMessages(context.Background(),
 		// NOTE: Each Message has Topic defined, otherwise an error is returned.
 		kafka.Message{
-			Topic:         topic,
-			Partition:     message2.Partition,
-			Offset:        message2.Offset,
-			HighWaterMark: message2.HighWaterMark,
-			Key:           message2.Key,
-			Value:         message2.Value,
-			Time:          message2.Time,
+			Topic:     topic,
+			Partition: message2.Partition,
+			Key:       message2.Key,
+			Value:     message2.Value,
+			Headers:   message2.Headers,
+			Time:      message2.Time,
 		},
 	)
 

@@ -1,0 +1,32 @@
+stage:
+  couchbase:
+    address: localhost
+    username: "admin"
+    password: "123456"
+    bucketName: "errors"
+    scopeName: "_default"
+    collectionName: "_default"
+  kafka:
+    brokers: localhost:9092
+  server:
+    port: ":8090"
+  consumers:
+    - topicName: "xxx"
+      targetTopicName: "xxx"
+    - topicName: "xxx"
+      targetTopicName: "xxx"
+prod:
+  couchbase:
+    address: localhost
+    username: "testt"
+    password: "testtttt"
+    bucketName: "errors"
+    scopeName: "_default"
+    collectionName: "_default"
+  kafka:
+    brokers: localhost:9092
+  server:
+    port: ":8090"
+  consumers:
+    - topicName: "xxx"
+      targetTopicName: "yyy"

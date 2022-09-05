@@ -2,10 +2,10 @@ package services
 
 import (
 	"fmt"
+	"github.com/segmentio/kafka-go"
 	"kafka-error-triggerer/pkg/models"
 	"kafka-error-triggerer/pkg/repositories"
 	"kafka-error-triggerer/sender"
-	"kafka-error-triggerer/utils"
 	"log"
 )
 
@@ -19,6 +19,7 @@ type MessageServiceInterface interface {
 
 type MessageServiceStruct struct {
 	Repository repositories.MessageRepositoryInterface
+	Writer     kafka.Writer
 }
 
 func (s MessageServiceStruct) GetAllMessagesService() ([]models.MessageModel, error) {
@@ -59,37 +60,30 @@ func (s MessageServiceStruct) ReproduceMessage(key string) error {
 		return err
 	}
 
-	for _, consumerConfig := range utils.Config.Consumers {
+	newHeaderList := make([]models.MyHeader, 0)
 
-		newHeaderList := make([]models.MyHeader, 0)
+	for _, header := range message.Headers {
 
-		for _, header := range message.Headers {
+		if header.Key == "ReproduceCount" {
+			reproduceCount, ok := header.Value.(float64)
 
-			if header.Key == "ReproduceCount" {
-				reproduceCount, ok := header.Value.(int)
-
-				if !ok {
-					println("An error occurs on type converting from interface to int in sender")
-				}
-
-				reproduceCount += 1
-
-				header.Value = float64(reproduceCount)
+			if !ok {
+				println("An error occurs on type converting from interface to int in sender")
 			}
-
-			newHeaderList = append(newHeaderList, header)
-
+			reproduceCount += 1
+			header.Value = float64(reproduceCount)
 		}
+		newHeaderList = append(newHeaderList, header)
+	}
 
-		message.Headers = newHeaderList
+	message.Headers = newHeaderList
 
-		sender.SendMessageToAnotherTopic(message, consumerConfig)
+	sender.SendMessageToAnotherTopic(message, s.Writer)
 
-		err := s.Repository.UpsertMessage(message)
+	err = s.Repository.UpsertMessage(message)
 
-		if err != nil {
-			log.Println(err)
-		}
+	if err != nil {
+		log.Println(err)
 	}
 
 	return err

@@ -5,10 +5,10 @@ import (
 	"kafka-error-triggerer/utils"
 )
 
-func ConsumerGenerator(messageRepo repositories.MessageRepositoryInterface) {
+func ConsumerGenerator(messageRepo repositories.MessageRepositoryInterface, config utils.Configuration) {
 
-	for _, consumerConfig := range utils.Config.Consumers {
-		go StartKafkaConsumer(messageRepo, consumerConfig)
+	for _, consumer := range config.Consumers {
+		go StartKafkaConsumer(messageRepo, config, consumer)
 	}
 
 }

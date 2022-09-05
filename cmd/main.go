@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/segmentio/kafka-go"
 	"kafka-error-triggerer/consumer"
 	"kafka-error-triggerer/pkg/db"
 	"kafka-error-triggerer/pkg/handlers"
@@ -14,22 +15,25 @@ import (
 
 func main() {
 
-	config, err := utils.LoadConfig()
+	config := utils.NewConfiguration()
 
-	if err != nil {
-		println("An error occurred on config process in main.go file")
-	}
-
-	cluster, collection := db.Start()
+	cluster, collection := db.Start(*config)
 
 	messageRepo := repositories.NewMessageRepository(cluster, collection)
 
-	consumer.ConsumerGenerator(messageRepo)
+	consumer.ConsumerGenerator(messageRepo, *config)
+
+	w := &kafka.Writer{
+		Addr: kafka.TCP(config.Kafka.Brokers),
+		// NOTE: When Topic is not defined here, each Message must define it instead.
+		Balancer: &kafka.LeastBytes{},
+	}
 
 	app := fiber.New()
 
 	messageServices := services.MessageServiceStruct{
 		Repository: messageRepo,
+		Writer:     *w,
 	}
 
 	messageHandler := handlers.MessageHandlerStruct{
@@ -50,13 +54,13 @@ func main() {
 
 	app.Get("/message/:key", messageHandler.GetMessageByKey)
 
-	app.Post("/message/insert", messageHandler.UpsertMessage)
+	app.Post("/message/upsert", messageHandler.UpsertMessage)
 
 	app.Post("/message/reproduce/:key", messageHandler.ReproduceMessage)
 
 	app.Get("/message/by/:topicName", messageHandler.GetMessagesByTopic)
 
-	err = app.Listen(config.Server.Port)
+	err := app.Listen(config.Server.Port)
 
 	if err != nil {
 		log.Println(err)

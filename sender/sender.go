@@ -5,17 +5,10 @@ import (
 	"encoding/json"
 	"github.com/segmentio/kafka-go"
 	"kafka-error-triggerer/pkg/models"
-	"kafka-error-triggerer/utils"
 	"log"
 )
 
-func SendMessageToAnotherTopic(reproducedMessage models.MessageModel, consumerConfig utils.ConsumerConfig) {
-
-	w := &kafka.Writer{
-		Addr: kafka.TCP(consumerConfig.Broker),
-		// NOTE: When Topic is not defined here, each Message must define it instead.
-		Balancer: &kafka.LeastBytes{},
-	}
+func SendMessageToAnotherTopic(reproducedMessage models.MessageModel, w kafka.Writer) {
 
 	reproducedMessageKey, err := json.Marshal(reproducedMessage.Key)
 
@@ -50,7 +43,7 @@ func SendMessageToAnotherTopic(reproducedMessage models.MessageModel, consumerCo
 	err = w.WriteMessages(context.Background(),
 		// NOTE: Each Message has Topic defined, otherwise an error is returned.
 		kafka.Message{
-			Topic:     consumerConfig.TargetTopic.TopicName,
+			Topic:     reproducedMessage.TargetTopic,
 			Partition: reproducedMessage.Partition,
 			Key:       reproducedMessageKey,
 			Value:     reproducedMessageValue,

@@ -1,59 +1,66 @@
 package utils
 
 import (
-	"fmt"
 	"github.com/spf13/viper"
+	"log"
+	"os"
 )
 
-type ConfigStruct struct {
-	Couchbase struct {
-		Address  string `json:"address" mapstucture:"address"`
-		Port     string `json:"port"`
-		Username string `json:"username"`
-		Password string `json:"password"`
-	} `json:"couchbase" mapstucture:"couchbase"`
-	Server struct {
-		Port string `json:"port"`
-	} `json:"server"`
-	Consumers []ConsumerConfig `json:"consumers"`
+type Configuration struct {
+	Couchbase CouchbaseConfig `yaml:"couchbase"`
+	Kafka     KafkaConfig     `yaml:"kafka"`
+	Server    ServerConfig    `yaml:"server"`
+	Consumers []Consumer      `yaml:"consumers"`
 }
-
-type ConsumerConfig struct {
-	ID          int    `json:"id"`
-	Broker      string `json:"broker"`
-	TopicName   string `json:"topicName"`
-	GroupID     string `json:"groupId"`
-	MaxBytes    int    `json:"maxBytes"`
-	TargetTopic struct {
-		Network   string `json:"network"`
-		Address   string `json:"address"`
-		TopicName string `json:"topicName"`
-	} `json:"targetTopic"`
+type CouchbaseConfig struct {
+	Address        string `yaml:"address"`
+	UserName       string `yaml:"username"`
+	Password       string `yaml:"password"`
+	BucketName     string `yaml:"bucketName"`
+	ScopeName      string `yaml:"scopeName"`
+	CollectionName string `yaml:"collectionName"`
+}
+type KafkaConfig struct {
+	Brokers string `yaml:"brokers"`
+}
+type ServerConfig struct {
+	Port string `yaml:"port"`
+}
+type Consumer struct {
+	TopicName       string `yaml:"topicName"`
+	TargetTopicName string `yaml:"targetTopicName"`
 }
 
 var vp *viper.Viper
 
-var Config ConfigStruct
+var Config Configuration
 
-func LoadConfig() (ConfigStruct, error) {
-	vp = viper.New()
+func NewConfiguration() *Configuration {
+	var configuration Configuration
+	env := getEnv()
 
-	vp.AddConfigPath("./utils")
-	vp.SetConfigName("config")
-	vp.SetConfigType("json")
-	err := vp.ReadInConfig()
+	viper := viper.New()
+
+	viper.AddConfigPath("utils")
+	viper.SetConfigType("yaml")
+	viper.SetConfigName("config")
+
+	err := viper.ReadInConfig()
+	v := viper.Sub(env)
 
 	if err != nil {
-		return ConfigStruct{}, err
+		log.Panic(err.Error())
 	}
 
-	err = vp.Unmarshal(&Config)
+	err = v.Unmarshal(&configuration)
 
-	if err != nil {
-		return ConfigStruct{}, err
+	return &configuration
+}
+
+func getEnv() string {
+	env := os.Getenv("ACTIVE_PROFILE")
+	if env != "" {
+		return env
 	}
-
-	fmt.Println(Config)
-
-	return Config, nil
+	return "stage"
 }

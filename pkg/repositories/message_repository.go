@@ -27,7 +27,7 @@ func NewMessageRepository(cluster *gocb.Cluster, collection *gocb.Collection) Me
 
 func (r messageRepoStruct) GetAllMessages() ([]models.MessageModel, error) {
 	queryResult, err := r.cluster.Query(
-		fmt.Sprintf("SELECT * FROM %s", "errors._default._default"), nil,
+		fmt.Sprintf("SELECT * FROM %s", r.collection), nil,
 	)
 
 	if err != nil {
@@ -100,7 +100,7 @@ func (r messageRepoStruct) DeleteMessage(key string) error {
 func (r messageRepoStruct) GetMessagesByTopic(topicName string) ([]map[string]interface{}, error) {
 
 	queryResult, err := r.cluster.Query(
-		fmt.Sprintf("SELECT * FROM %s WHERE TopicName = '%s'", "errors._default._default", topicName), nil,
+		fmt.Sprintf("SELECT * FROM %s WHERE TopicName = '%s'", r.collection, topicName), nil,
 	)
 
 	if err != nil {

@@ -4,12 +4,13 @@ import (
 	"context"
 	"fmt"
 	"github.com/segmentio/kafka-go"
+	"kafka-error-triggerer/utils"
 )
 
 func main() {
 	conf := kafka.ReaderConfig{
-		Brokers:  []string{"localhost:9092"},
-		Topic:    "main-topic-1",
+		Brokers:  []string{utils.Configuration{}.Kafka.Brokers},
+		Topic:    "earth.international-test-target",
 		GroupID:  "g1",
 		MaxBytes: 100}
 

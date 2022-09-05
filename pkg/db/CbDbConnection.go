@@ -8,20 +8,20 @@ import (
 	"github.com/couchbase/gocb/v2"
 )
 
-func Start() (*gocb.Cluster, *gocb.Collection) {
+func Start(config utils.Configuration) (*gocb.Cluster, *gocb.Collection) {
 
-	username := utils.Config.Couchbase.Username
-	password := utils.Config.Couchbase.Password
+	username := config.Couchbase.UserName
+	password := config.Couchbase.Password
 
 	// Initialize the Connection
-	cluster, err := gocb.Connect(utils.Config.Couchbase.Address, gocb.ClusterOptions{
+	cluster, err := gocb.Connect(config.Couchbase.Address, gocb.ClusterOptions{
 
 		Authenticator: gocb.PasswordAuthenticator{
 			Username: username,
 			Password: password,
 		},
 		TimeoutsConfig: gocb.TimeoutsConfig{
-			KVTimeout: time.Duration(5) * time.Second,
+			KVTimeout: time.Duration(10) * time.Second,
 		},
 		SecurityConfig: gocb.SecurityConfig{
 			TLSSkipVerify: true,
@@ -32,7 +32,7 @@ func Start() (*gocb.Cluster, *gocb.Collection) {
 		log.Fatal(err)
 	}
 
-	collection := cluster.Bucket("errors").Scope("_default").Collection("_default")
+	collection := cluster.Bucket(config.Couchbase.BucketName).Scope(config.Couchbase.ScopeName).Collection(config.Couchbase.CollectionName)
 
 	return cluster, collection
 }
