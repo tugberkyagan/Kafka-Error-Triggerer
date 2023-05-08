@@ -28,8 +28,4 @@
 ##### -TTL (Time to live)
 ###### Messages received by consumers or consumers over various topics are recorded in the database. However, these records can overwhelm the database with too much data after a long period of time. In order to overcome this, the 'Time to live' feature can be added to the project and the messages that remain in the system for a certain period of time can be deleted from the database.
 
-<hr/>
-
-### Developers of the project
-##### Trendyol Product International Team
 
